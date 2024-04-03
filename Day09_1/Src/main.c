@@ -20,44 +20,35 @@
 #include <stdio.h>
 #include "stm32f4xx.h"
 #include "system_stm32f4xx.h"
-#include "eeprom.h"
-#include "usart.h"
 
+#include "lis3dsh.h"
+#include "i2c_lcd.h"
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
 int main(void)
 {
-	char str[32];
-	int choice;
-	SystemInit();
-	UartInit(BAUD_9600);
-	EEPROM_Init();
-	do
-	{
-		UartPuts("enter choice\r\n");
-		UartPuts("1 write a string into EEPROM at address 0x0000\r\n");
-		UartPuts("2 read 32 bytes from from address 0x0000\r\n");
-		UartGets(str);
-		sscanf(str, "%d",&choice);
-		switch(choice)
-		{
-			case 1 :
-				sscanf(str,"enter string%s\r\n",str);
-	        	UartGets(str);
-				EEPROM_Write(0x0000, (uint8_t*)str, 32);
-				break;
-			case 2 :
-				sprintf(str,"string are\r\n");
-				EEPROM_Read(0x0000, (uint8_t*)str, 32);
-				UartPuts(str);
-				break;
-	      }
-	}
-		while(choice!=0);
-		return 0;
-
-    while(1);
+	char str1[32];
+	char str2[32];
+		int ret;
+		LcdInit();
+		LIS_Data val;
+		SystemInit();
+		
+		
+		LIS_Init();
+		DelayMs(1000);
+		while(1) {
+			ret = LIS_DRdy();
+			if(ret) {
+				val = LIS_GetData();
+				sprintf(str1, "X=%d,Y=%d", val.x, val.y);
+				sprintf(str2, "Z=%d\r\n", val.z);
+				LcdPuts(LCD_LINE1,str1);
+				LcdPuts(LCD_LINE2,str2);
+				DelayMs(1000);
+			}
+		}
 	return 0;
 }
